@@ -66,16 +66,3 @@ By default, the server will start on `http://localhost:8080`. Open this URL in y
 
 - The server is designed for local use and hasn't been tested for production environments
 - Video playback support depends on the browser's capabilities
-
-## Contributing
-
-This project was created for a specific bounty challenge. However, if you'd like to suggest improvements or report issues, please feel free to open an issue or submit a pull request.
-
-## License
-
-This project is open-source and available under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-- StackUp for providing the bounty challenge
-- The Rust community for their excellent documentation and crates
