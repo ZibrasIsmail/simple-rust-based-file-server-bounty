@@ -13,8 +13,8 @@ pub fn send_directory_listing(stream: &mut TcpStream, dir_path: &Path, root_dir:
         "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Directory Listing</title></head><body>"
     );
 
-    let relative_path = dir_path.strip_prefix(root_dir).unwrap_or(Path::new("/"));
-    contents.push_str(&format!("<h1>Directory: {}</h1>", relative_path.display()));
+    // Display the current directory path
+    contents.push_str(&format!("<h1>Directory: {}</h1>", dir_path.display()));
 
     // Add "Go back up a directory" link
     if dir_path != root_dir {
@@ -59,6 +59,8 @@ pub fn send_directory_listing(stream: &mut TcpStream, dir_path: &Path, root_dir:
         eprintln!("Failed to flush stream: {}", e);
     }
 }
+
+
 
 pub fn send_file(stream: &mut TcpStream, file_path: &Path) {
     if let Ok(contents) = fs::read(file_path) {
