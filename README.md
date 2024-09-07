@@ -2,6 +2,14 @@
 
 This project is a simple file server implemented in Rust, created as part of the StackUp bounty challenge. It serves files as a simple HTML document, listing all directories and folders as links.
 
+## Test Files
+
+To help test the functionality of this file server, we've included sample files in the `test_files` directory:
+
+- `simple-http/index.html`: A simple HTML file to test basic file serving
+- `document.pdf`: A PDF file to test PDF viewing capabilities
+- `video_sample.mp4`: A short video file to test video playback
+
 ## Features
 
 - Traverse up and into directories

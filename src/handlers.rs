@@ -19,10 +19,10 @@ pub fn handle_connection(mut stream: TcpStream) {
 
     let path = decode(request_line.split_whitespace().nth(1).unwrap_or("/")).to_string();
     let root_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let full_path = if path.starts_with("/raw/") {
-        root_dir.join(path.trim_start_matches("/raw/"))
-    } else {
+    let full_path = if path.starts_with('/') {
         root_dir.join(path.trim_start_matches('/'))
+    } else {
+        root_dir.join(&path)
     };
 
     println!("Root dir: {:?}", root_dir);

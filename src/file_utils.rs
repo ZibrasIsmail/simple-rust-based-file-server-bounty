@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use crate::http_utils::send_404;
 
 pub fn is_safe_path(root_dir: &Path, requested_path: &Path) -> bool {
-    requested_path.starts_with(root_dir) && requested_path.canonicalize().is_ok()
+    requested_path.starts_with(root_dir)
 }
 
 pub fn send_directory_listing(stream: &mut TcpStream, dir_path: &Path, root_dir: &Path) {
@@ -16,23 +16,27 @@ pub fn send_directory_listing(stream: &mut TcpStream, dir_path: &Path, root_dir:
     let relative_path = dir_path.strip_prefix(root_dir).unwrap_or(Path::new("/"));
     contents.push_str(&format!("<h1>Directory: {}</h1>", relative_path.display()));
 
+    // Add "Go back up a directory" link
     if dir_path != root_dir {
-        if let Some(parent) = relative_path.parent() {
-            contents.push_str(&format!("<p><a href=\"/{}\">Parent Directory</a></p>", 
-                parent.to_string_lossy()));
-        }
+        let parent = dir_path.parent().unwrap_or(root_dir);
+        let relative_parent = parent.strip_prefix(root_dir).unwrap_or(Path::new("/"));
+        contents.push_str(&format!(
+            "<p><a href=\"/{}\">&larr; Go back up a directory</a></p>",
+            relative_parent.display()
+        ));
     }
 
     contents.push_str("<ul>");
-    
+
     if let Ok(entries) = fs::read_dir(dir_path) {
         for entry in entries {
             if let Ok(entry) = entry {
                 let path = entry.path();
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 let relative_path = path.strip_prefix(root_dir).unwrap_or(&path).to_string_lossy();
-                let link = format!("<li><a href=\"/{}\">{}{}</a></li>", 
-                    relative_path, 
+                let link = format!(
+                    "<li><a href=\"/{}\">{}{}</a></li>",
+                    relative_path,
                     name,
                     if path.is_dir() { "/" } else { "" }
                 );
@@ -40,9 +44,9 @@ pub fn send_directory_listing(stream: &mut TcpStream, dir_path: &Path, root_dir:
             }
         }
     }
-    
+
     contents.push_str("</ul></body></html>");
-    
+
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\n\r\n{}",
         contents.len(),
