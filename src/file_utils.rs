@@ -71,11 +71,8 @@ pub fn send_file(stream: &mut TcpStream, file_path: &Path) {
 
         let file_name = file_path.file_name().unwrap().to_str().unwrap();
 
-        if content_type == "application/pdf" {
-            send_pdf_viewer(stream, file_name);
-        } else {
-            send_raw_content(stream, &contents, &content_type);
-        }
+        // Remove the special handling for PDFs
+        send_raw_content(stream, &contents, &content_type);
     } else {
         send_404(stream);
     }
@@ -88,6 +85,7 @@ pub fn send_raw_file(stream: &mut TcpStream, file_path: &Path) {
                 .first_or_octet_stream()
                 .essence_str()
                 .to_string();
+            println!("Sending raw file: {:?}, Content-Type: {}", file_path, content_type);
             send_raw_content(stream, &contents, &content_type);
         }
         Err(e) => {
@@ -97,60 +95,14 @@ pub fn send_raw_file(stream: &mut TcpStream, file_path: &Path) {
     }
 }
 
-fn send_pdf_viewer(stream: &mut TcpStream, file_name: &str) {
-    let html_content = format!(
-        r#"<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{}</title>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-            <style>
-                body, html {{ height: 100%; margin: 0; padding: 0; }}
-                #pdf-viewer {{ width: 100%; height: 100%; }}
-            </style>
-        </head>
-        <body>
-            <canvas id="pdf-viewer"></canvas>
-            <script>
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
-                
-                const loadingTask = pdfjsLib.getDocument('/raw/{}');
-                loadingTask.promise.then(function(pdf) {{
-                    pdf.getPage(1).then(function(page) {{
-                        const scale = 1.5;
-                        const viewport = page.getViewport({{scale: scale}});
-                        const canvas = document.getElementById('pdf-viewer');
-                        const context = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-                        const renderContext = {{
-                            canvasContext: context,
-                            viewport: viewport
-                        }};
-                        page.render(renderContext);
-                    }});
-                }});
-            </script>
-        </body>
-        </html>"#,
-        file_name,
-        file_name
-    );
-
-    let response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\n\r\n{}",
-        html_content.len(),
-        html_content
-    );
-    stream.write_all(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
-}
-
 fn send_raw_content(stream: &mut TcpStream, contents: &[u8], content_type: &str) {
     let response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n",
+        "HTTP/1.1 200 OK\r\n\
+        Content-Type: {}\r\n\
+        Content-Length: {}\r\n\
+        Content-Disposition: inline\r\n\
+        X-Content-Type-Options: nosniff\r\n\
+        \r\n",
         content_type,
         contents.len(),
     );
